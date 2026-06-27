@@ -9,4 +9,4 @@ llama-index
 openai
 llama-index-embeddings-huggingface
 sentence-transformers
-llama-index-llms-groq
+llama-index-llms-openai
