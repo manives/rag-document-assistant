@@ -57,5 +57,11 @@ if uploaded_files:
                     st.markdown(f"**Trecho {i+1}:**")
                     # Escapamos o texto para HTML puro para impedir que o Markdown crie títulos gigantes
                     import html
-                    safe_text = html.escape(node.node.text.strip()).replace('\n', '<br>')
-                    st.markdown(f"<div style='background-color: var(--secondary-background-color); padding: 15px; border-radius: 8px; font-size: 14px; margin-bottom: 15px;'>{safe_text}</div>", unsafe_allow_html=True)
+                    safe_text = html.escape(node.node.text.strip())
+                    # PDFs costumam ter uma quebra de linha (\n) para cada palavra ou final de margem.
+                    # Preservamos parágrafos reais (\n\n) e convertemos quebras de margem em espaços.
+                    safe_text = safe_text.replace('\n\n', '__PARAGRAPH__')
+                    safe_text = safe_text.replace('\n', ' ')
+                    safe_text = safe_text.replace('__PARAGRAPH__', '<br><br>')
+                    
+                    st.markdown(f"<div style='background-color: var(--secondary-background-color); padding: 15px; border-radius: 8px; font-size: 14px; margin-bottom: 15px; line-height: 1.5;'>{safe_text}</div>", unsafe_allow_html=True)
