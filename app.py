@@ -12,7 +12,12 @@ import os
 
 st.title("RAG Demo")
 
-openrouter_api_key = st.sidebar.text_input("OpenRouter API Key", type="password")
+# Tenta pegar a chave dos Secrets do Streamlit Cloud primeiro
+openrouter_api_key = st.secrets.get("OPENROUTER_API_KEY", "")
+
+# Se não estiver configurado nos Secrets, pede na interface
+if not openrouter_api_key:
+    openrouter_api_key = st.sidebar.text_input("OpenRouter API Key", type="password")
 
 uploaded_files = st.file_uploader("Upload PDFs", accept_multiple_files=True)
 
