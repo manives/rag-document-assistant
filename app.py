@@ -26,7 +26,7 @@ if uploaded_files:
         st.info("Para usar sem pagar nada, crie uma chave gratuita em https://console.groq.com/keys e cole na barra lateral (ou configure os Secrets no painel).")
         st.stop()
         
-    Settings.llm = Groq(model="llama3-8b-8192", api_key=groq_api_key)
+    Settings.llm = Groq(model="llama-3.1-8b-instant", api_key=groq_api_key)
 
     os.makedirs("./data", exist_ok=True)
     for file in uploaded_files:
