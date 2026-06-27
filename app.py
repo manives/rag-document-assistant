@@ -38,18 +38,22 @@ if uploaded_files:
 
     query_engine = index.as_query_engine()
 
-    question = st.text_input("Faça uma pergunta sobre os documentos:")
+    question = st.chat_input("Digite sua pergunta aqui e aperte Enter...")
 
     if question:
-        with st.spinner("Analisando os PDFs e gerando a resposta..."):
-            response = query_engine.query(question)
+        # Exibe a pergunta do usuário com o ícone de usuário
+        with st.chat_message("user"):
+            st.write(question)
 
-        st.write("### 🤖 Resposta")
-        st.write(response.response)
+        # Exibe a resposta do assistente com o ícone de robô
+        with st.chat_message("assistant"):
+            with st.spinner("Analisando os PDFs e gerando a resposta..."):
+                response = query_engine.query(question)
 
-        with st.expander("📚 Ver trechos do documento usados como fonte"):
-            for i, node in enumerate(response.source_nodes):
-                st.markdown(f"**Trecho {i+1}:**")
-                # Usamos st.info para que o texto fique em um bloco destacado
-                # e evite que o markdown interprete caracteres especiais como títulos gigantes
-                st.info(node.node.text.strip())
+            st.write(response.response)
+
+            with st.expander("📚 Ver trechos do documento usados como fonte"):
+                for i, node in enumerate(response.source_nodes):
+                    st.markdown(f"**Trecho {i+1}:**")
+                    # Usamos st.info para que o texto fique em um bloco destacado
+                    st.info(node.node.text.strip())
