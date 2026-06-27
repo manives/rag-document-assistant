@@ -12,9 +12,9 @@ import os
 import json
 import uuid
 
-st.set_page_config(page_title="DocuMind AI", page_icon="📚")
+st.set_page_config(page_title="ChatDocs Pro", page_icon="📚")
 
-st.title("📚 DocuMind AI")
+st.title("📚 ChatDocs Pro")
 
 DATA_DIR = "./data"
 SESSIONS_FILE = os.path.join(DATA_DIR, "sessions.json")
