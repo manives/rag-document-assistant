@@ -38,14 +38,18 @@ if uploaded_files:
 
     query_engine = index.as_query_engine()
 
-    question = st.text_input("Ask something")
+    question = st.text_input("Faça uma pergunta sobre os documentos:")
 
     if question:
-        response = query_engine.query(question)
+        with st.spinner("Analisando os PDFs e gerando a resposta..."):
+            response = query_engine.query(question)
 
-        st.write("### Answer")
+        st.write("### 🤖 Resposta")
         st.write(response.response)
 
-        st.write("### Source context")
-        for node in response.source_nodes:
-            st.write(node.node.text)
+        with st.expander("📚 Ver trechos do documento usados como fonte"):
+            for i, node in enumerate(response.source_nodes):
+                st.markdown(f"**Trecho {i+1}:**")
+                # Usamos st.info para que o texto fique em um bloco destacado
+                # e evite que o markdown interprete caracteres especiais como títulos gigantes
+                st.info(node.node.text.strip())
