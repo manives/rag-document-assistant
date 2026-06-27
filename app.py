@@ -180,18 +180,34 @@ if question:
         st.write(response.response)
 
         sources_html = ""
-        with st.expander("📚 Ver trechos do documento usados como fonte"):
-            for i, node in enumerate(response.source_nodes):
-                st.markdown(f"**Trecho {i+1}:**")
-                import html
-                safe_text = html.escape(node.node.text.strip())
-                safe_text = safe_text.replace('\n\n', '__PARAGRAPH__')
-                safe_text = safe_text.replace('\n', ' ')
-                safe_text = safe_text.replace('__PARAGRAPH__', '<br><br>')
-                
-                block = f"<div style='background-color: var(--secondary-background-color); padding: 15px; border-radius: 8px; font-size: 14px; margin-bottom: 15px; line-height: 1.5;'>{safe_text}</div>"
-                st.markdown(block, unsafe_allow_html=True)
-                sources_html += f"**Trecho {i+1}:**\n{block}\n"
+        
+        # Heurística para esconder as fontes caso a IA não consiga responder
+        resposta_lower = response.response.lower()
+        recusas = [
+            "não consegui entender",
+            "fornecer mais contexto",
+            "não há informações",
+            "não menciona",
+            "não encontrei",
+            "não tenho informações",
+            "contexto não fornece",
+            "não é possível responder"
+        ]
+        is_refusal = any(r in resposta_lower for r in recusas)
+        
+        if response.source_nodes and not is_refusal:
+            with st.expander("📚 Ver trechos do documento usados como fonte"):
+                for i, node in enumerate(response.source_nodes):
+                    st.markdown(f"**Trecho {i+1}:**")
+                    import html
+                    safe_text = html.escape(node.node.text.strip())
+                    safe_text = safe_text.replace('\n\n', '__PARAGRAPH__')
+                    safe_text = safe_text.replace('\n', ' ')
+                    safe_text = safe_text.replace('__PARAGRAPH__', '<br><br>')
+                    
+                    block = f"<div style='background-color: var(--secondary-background-color); padding: 15px; border-radius: 8px; font-size: 14px; margin-bottom: 15px; line-height: 1.5;'>{safe_text}</div>"
+                    st.markdown(block, unsafe_allow_html=True)
+                    sources_html += f"**Trecho {i+1}:**\n{block}\n"
         
         # Salva a resposta no histórico
         current_session["messages"].append({
