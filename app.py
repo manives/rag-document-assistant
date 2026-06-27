@@ -7,7 +7,7 @@ Settings.embed_model = HuggingFaceEmbedding(
 
 import streamlit as st
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
-from llama_index.llms.openai import OpenAI
+from llama_index.llms.openai_like import OpenAILike
 import os
 
 st.title("RAG Demo")
@@ -21,10 +21,12 @@ if uploaded_files:
         st.info("Por favor, cole sua chave do OpenRouter na barra lateral para continuar.")
         st.stop()
         
-    Settings.llm = OpenAI(
+    Settings.llm = OpenAILike(
         model="minimax/minimax-m2.5:free", 
         api_key=openrouter_api_key, 
-        api_base="https://openrouter.ai/api/v1"
+        api_base="https://openrouter.ai/api/v1",
+        is_chat_model=True,
+        context_window=32768
     )
 
     os.makedirs("./data", exist_ok=True)
