@@ -4,5 +4,7 @@ llama-index-core
 llama-index-readers-file
 llama-index-embeddings-openai
 chromadb
-openai
 pypdf
+llama-index
+llama-index-embeddings-openai
+openai
