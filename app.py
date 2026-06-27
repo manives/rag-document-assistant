@@ -12,13 +12,18 @@ import os
 
 st.title("RAG Demo")
 
-groq_api_key = st.sidebar.text_input("Groq API Key (Gratuita)", type="password")
+# Tenta ler a chave dos secrets (definitiva) primeiro
+groq_api_key = st.secrets.get("GROQ_API_KEY", "")
+
+# Se não encontrar a chave secreta, exibe o campo na barra lateral
+if not groq_api_key:
+    groq_api_key = st.sidebar.text_input("Groq API Key (Gratuita)", type="password")
 
 uploaded_files = st.file_uploader("Upload PDFs", accept_multiple_files=True)
 
 if uploaded_files:
     if not groq_api_key:
-        st.info("Para usar sem pagar nada, crie uma chave gratuita em https://console.groq.com/keys e cole na barra lateral.")
+        st.info("Para usar sem pagar nada, crie uma chave gratuita em https://console.groq.com/keys e cole na barra lateral (ou configure os Secrets no painel).")
         st.stop()
         
     Settings.llm = Groq(model="llama3-8b-8192", api_key=groq_api_key)
