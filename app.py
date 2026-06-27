@@ -33,35 +33,69 @@ if uploaded_files:
         with open(f"./data/{file.name}", "wb") as f:
             f.write(file.getbuffer())
 
-    documents = SimpleDirectoryReader("./data").load_data()
-    index = VectorStoreIndex.from_documents(documents)
+    @st.cache_resource(show_spinner="Indexando documentos...")
+    def get_query_engine(file_names):
+        documents = SimpleDirectoryReader("./data").load_data()
+        index = VectorStoreIndex.from_documents(documents)
+        return index.as_query_engine()
+        
+    query_engine = get_query_engine(tuple([f.name for f in uploaded_files]))
 
-    query_engine = index.as_query_engine()
+    # Inicializa o histórico de mensagens e perguntas
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+        
+    # Barra lateral com o histórico das perguntas (para fácil acesso)
+    if st.session_state.messages:
+        st.sidebar.markdown("---")
+        st.sidebar.markdown("### 🕒 Histórico de Perguntas")
+        for msg in st.session_state.messages:
+            if msg["role"] == "user":
+                st.sidebar.caption(f"💬 {msg['content']}")
+
+    # Renderiza todas as mensagens anteriores na tela (estilo ChatGPT)
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.write(msg["content"])
+            if "sources" in msg:
+                with st.expander("📚 Ver trechos do documento usados como fonte"):
+                    st.markdown(msg["sources"], unsafe_allow_html=True)
 
     question = st.chat_input("Digite sua pergunta aqui e aperte Enter...")
 
     if question:
-        # Exibe a pergunta do usuário com o ícone de usuário
+        # Adiciona pergunta do usuário ao histórico
+        st.session_state.messages.append({"role": "user", "content": question})
         with st.chat_message("user"):
             st.write(question)
 
-        # Exibe a resposta do assistente com o ícone de robô
+        # Exibe a resposta do assistente
         with st.chat_message("assistant"):
             with st.spinner("Analisando os PDFs e gerando a resposta..."):
                 response = query_engine.query(question)
 
             st.write(response.response)
 
+            sources_html = ""
             with st.expander("📚 Ver trechos do documento usados como fonte"):
                 for i, node in enumerate(response.source_nodes):
                     st.markdown(f"**Trecho {i+1}:**")
-                    # Escapamos o texto para HTML puro para impedir que o Markdown crie títulos gigantes
                     import html
                     safe_text = html.escape(node.node.text.strip())
-                    # PDFs costumam ter uma quebra de linha (\n) para cada palavra ou final de margem.
-                    # Preservamos parágrafos reais (\n\n) e convertemos quebras de margem em espaços.
                     safe_text = safe_text.replace('\n\n', '__PARAGRAPH__')
                     safe_text = safe_text.replace('\n', ' ')
                     safe_text = safe_text.replace('__PARAGRAPH__', '<br><br>')
                     
-                    st.markdown(f"<div style='background-color: var(--secondary-background-color); padding: 15px; border-radius: 8px; font-size: 14px; margin-bottom: 15px; line-height: 1.5;'>{safe_text}</div>", unsafe_allow_html=True)
+                    block = f"<div style='background-color: var(--secondary-background-color); padding: 15px; border-radius: 8px; font-size: 14px; margin-bottom: 15px; line-height: 1.5;'>{safe_text}</div>"
+                    st.markdown(block, unsafe_allow_html=True)
+                    sources_html += f"**Trecho {i+1}:**\n{block}\n"
+            
+            # Salva a resposta no histórico
+            st.session_state.messages.append({
+                "role": "assistant", 
+                "content": response.response,
+                "sources": sources_html
+            })
+            
+            # Força o recarregamento para atualizar o histórico lateral
+            st.rerun()
