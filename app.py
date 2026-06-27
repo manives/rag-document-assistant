@@ -103,35 +103,34 @@ else:
     query_engine = None
         
 # === CONTROLE DE CRIATIVIDADE (POPOVER) ===
-# Calcula a cor do botão baseado na temperatura (0.0 = Pastel, 1.0 = Verde Musgo)
 temp = st.session_state.temperature
 r = int(245 - (245 - 85) * temp)
 g = int(245 - (245 - 107) * temp)
 b = int(220 - (220 - 47) * temp)
-text_color = "white" if temp > 0.4 else "black"
 
-st.markdown(f"""
-<style>
-/* Estiliza especificamente o botão do popover na barra lateral */
-[data-testid="stSidebar"] div[data-testid="stPopover"] button {{
-    background-color: rgb({r}, {g}, {b}) !important;
-    color: {text_color} !important;
-    border: 1px solid rgba(0,0,0,0.1) !important;
-    transition: all 0.3s ease;
-}}
-</style>
-""", unsafe_allow_html=True)
+# Injetar dependência do FontAwesome
+st.markdown('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">', unsafe_allow_html=True)
 
 with st.sidebar.popover("🧠 Nível de Criatividade"):
     st.markdown("**Ajuste o volume de criatividade da IA**")
-    st.slider(
-        "0 = Respostas robóticas e precisas\n1 = Respostas criativas e variáveis", 
-        min_value=0.0, 
-        max_value=1.0, 
-        step=0.1, 
-        key="temperature"
-    )
-    st.caption("Dica: Para RAG corporativo, mantenha próximo de 0.0.")
+    st.markdown("<p style='font-size: 13px; margin-bottom: -10px;'>0 = Robóticas e precisas &nbsp;|&nbsp; 1 = Criativas e variáveis</p>", unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 8, 1])
+    with col1:
+        st.markdown("<div style='margin-top: 35px; text-align: center;'><i class='fa-solid fa-brain' style='color: #D3D3D3; font-size: 20px;'></i></div>", unsafe_allow_html=True)
+    with col2:
+        st.slider(
+            "Volume", 
+            min_value=0.0, 
+            max_value=1.0, 
+            step=0.1, 
+            key="temperature",
+            label_visibility="collapsed"
+        )
+    with col3:
+        st.markdown(f"<div style='margin-top: 35px; text-align: center;'><i class='fa-solid fa-brain' style='color: rgb({r}, {g}, {b}); font-size: 20px;'></i></div>", unsafe_allow_html=True)
+        
+    st.caption("Dica: Para respostas mais corporativas, mantenha próximo de 0.0.")
 
 # Lista de sessões
 st.sidebar.markdown("---")
