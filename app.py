@@ -55,5 +55,7 @@ if uploaded_files:
             with st.expander("📚 Ver trechos do documento usados como fonte"):
                 for i, node in enumerate(response.source_nodes):
                     st.markdown(f"**Trecho {i+1}:**")
-                    # Usamos st.info para que o texto fique em um bloco destacado
-                    st.info(node.node.text.strip())
+                    # Escapamos o texto para HTML puro para impedir que o Markdown crie títulos gigantes
+                    import html
+                    safe_text = html.escape(node.node.text.strip()).replace('\n', '<br>')
+                    st.markdown(f"<div style='background-color: var(--secondary-background-color); padding: 15px; border-radius: 8px; font-size: 14px; margin-bottom: 15px;'>{safe_text}</div>", unsafe_allow_html=True)
