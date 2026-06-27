@@ -7,31 +7,28 @@ Settings.embed_model = HuggingFaceEmbedding(
 
 import streamlit as st
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
-from llama_index.llms.openai_like import OpenAILike
+from llama_index.llms.gemini import Gemini
 import os
 
 st.title("RAG Demo")
 
 # Tenta pegar a chave dos Secrets do Streamlit Cloud primeiro
-openrouter_api_key = st.secrets.get("OPENROUTER_API_KEY", "")
+gemini_api_key = st.secrets.get("GEMINI_API_KEY", "")
 
 # Se não estiver configurado nos Secrets, pede na interface
-if not openrouter_api_key:
-    openrouter_api_key = st.sidebar.text_input("OpenRouter API Key", type="password")
+if not gemini_api_key:
+    gemini_api_key = st.sidebar.text_input("Gemini API Key", type="password")
 
 uploaded_files = st.file_uploader("Upload PDFs", accept_multiple_files=True)
 
 if uploaded_files:
-    if not openrouter_api_key:
-        st.info("Por favor, cole sua chave do OpenRouter na barra lateral para continuar.")
+    if not gemini_api_key:
+        st.info("Por favor, cole sua chave do Gemini na barra lateral para continuar.")
         st.stop()
         
-    Settings.llm = OpenAILike(
-        model="meta-llama/llama-3.3-70b-instruct:free", 
-        api_key=openrouter_api_key, 
-        api_base="https://openrouter.ai/api/v1",
-        is_chat_model=True,
-        context_window=32768
+    Settings.llm = Gemini(
+        model="models/gemini-1.5-flash", 
+        api_key=gemini_api_key
     )
 
     os.makedirs("./data", exist_ok=True)
