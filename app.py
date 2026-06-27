@@ -66,7 +66,10 @@ groq_api_key = st.secrets.get("GROQ_API_KEY", "")
 if not groq_api_key:
     groq_api_key = st.sidebar.text_input("Groq API Key (Gratuita)", type="password")
 
-uploaded_files = st.file_uploader("Upload PDFs", accept_multiple_files=True)
+uploaded_files = st.file_uploader("Upload de Novos PDFs", accept_multiple_files=True)
+
+if current_session["files"]:
+    st.success(f"📚 **Documentos ativos nesta conversa:** {', '.join(current_session['files'])}")
 
 if uploaded_files:
     if not groq_api_key:
