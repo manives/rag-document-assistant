@@ -102,104 +102,104 @@ if current_session["files"]:
 else:
     query_engine = None
         
-    # === CONTROLE DE CRIATIVIDADE (POPOVER) ===
-    # Calcula a cor do botão baseado na temperatura (0.0 = Pastel, 1.0 = Verde Musgo)
-    temp = st.session_state.temperature
-    r = int(245 - (245 - 85) * temp)
-    g = int(245 - (245 - 107) * temp)
-    b = int(220 - (220 - 47) * temp)
-    text_color = "white" if temp > 0.4 else "black"
+# === CONTROLE DE CRIATIVIDADE (POPOVER) ===
+# Calcula a cor do botão baseado na temperatura (0.0 = Pastel, 1.0 = Verde Musgo)
+temp = st.session_state.temperature
+r = int(245 - (245 - 85) * temp)
+g = int(245 - (245 - 107) * temp)
+b = int(220 - (220 - 47) * temp)
+text_color = "white" if temp > 0.4 else "black"
 
-    st.markdown(f"""
-    <style>
-    /* Estiliza especificamente o botão do popover na barra lateral */
-    [data-testid="stSidebar"] div[data-testid="stPopover"] button {{
-        background-color: rgb({r}, {g}, {b}) !important;
-        color: {text_color} !important;
-        border: 1px solid rgba(0,0,0,0.1) !important;
-        transition: all 0.3s ease;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
+st.markdown(f"""
+<style>
+/* Estiliza especificamente o botão do popover na barra lateral */
+[data-testid="stSidebar"] div[data-testid="stPopover"] button {{
+    background-color: rgb({r}, {g}, {b}) !important;
+    color: {text_color} !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
+    transition: all 0.3s ease;
+}}
+</style>
+""", unsafe_allow_html=True)
 
-    with st.sidebar.popover("🧠 Nível de Criatividade"):
-        st.markdown("**Ajuste o volume de criatividade da IA**")
-        st.slider(
-            "0 = Respostas robóticas e precisas\n1 = Respostas criativas e variáveis", 
-            min_value=0.0, 
-            max_value=1.0, 
-            step=0.1, 
-            key="temperature"
-        )
-        st.caption("Dica: Para RAG corporativo, mantenha próximo de 0.0.")
+with st.sidebar.popover("🧠 Nível de Criatividade"):
+    st.markdown("**Ajuste o volume de criatividade da IA**")
+    st.slider(
+        "0 = Respostas robóticas e precisas\n1 = Respostas criativas e variáveis", 
+        min_value=0.0, 
+        max_value=1.0, 
+        step=0.1, 
+        key="temperature"
+    )
+    st.caption("Dica: Para RAG corporativo, mantenha próximo de 0.0.")
 
-    # Lista de sessões
-    st.sidebar.markdown("---")
-    if st.sidebar.button("➕ Nova Conversa", use_container_width=True):
-        create_session()
+# Lista de sessões
+st.sidebar.markdown("---")
+if st.sidebar.button("➕ Nova Conversa", use_container_width=True):
+    create_session()
+    st.rerun()
+
+st.sidebar.markdown("### 🕒 Suas Conversas")
+for s_id, session_data in reversed(list(st.session_state.sessions.items())):
+    is_current = (s_id == current_id)
+    btn_label = f"🟢 {session_data['title']}" if is_current else f"💬 {session_data['title']}"
+    if st.sidebar.button(btn_label, key=f"btn_{s_id}", use_container_width=True):
+        st.session_state.current_session_id = s_id
         st.rerun()
 
-    st.sidebar.markdown("### 🕒 Suas Conversas")
-    for s_id, session_data in reversed(list(st.session_state.sessions.items())):
-        is_current = (s_id == current_id)
-        btn_label = f"🟢 {session_data['title']}" if is_current else f"💬 {session_data['title']}"
-        if st.sidebar.button(btn_label, key=f"btn_{s_id}", use_container_width=True):
-            st.session_state.current_session_id = s_id
-            st.rerun()
-
-    # Renderiza todas as mensagens anteriores na tela (estilo ChatGPT)
-    for msg in current_session["messages"]:
-        with st.chat_message(msg["role"]):
-            st.write(msg["content"])
-            if "sources" in msg:
-                with st.expander("📚 Ver trechos do documento usados como fonte"):
-                    st.markdown(msg["sources"], unsafe_allow_html=True)
-
-    question = st.chat_input("Digite sua pergunta aqui e aperte Enter...")
-
-    if question:
-        if not query_engine:
-            st.error("Por favor, faça o upload de um PDF primeiro!")
-            st.stop()
-            
-        # Atualiza título na primeira pergunta
-        if len(current_session["messages"]) == 0:
-            current_session["title"] = question[:30] + ("..." if len(question) > 30 else "")
-            
-        # Adiciona pergunta do usuário ao histórico
-        current_session["messages"].append({"role": "user", "content": question})
-        save_sessions(st.session_state.sessions)
-        with st.chat_message("user"):
-            st.write(question)
-
-        # Exibe a resposta do assistente
-        with st.chat_message("assistant"):
-            with st.spinner("Analisando os PDFs e gerando a resposta..."):
-                response = query_engine.query(question)
-
-            st.write(response.response)
-
-            sources_html = ""
+# Renderiza todas as mensagens anteriores na tela (estilo ChatGPT)
+for msg in current_session["messages"]:
+    with st.chat_message(msg["role"]):
+        st.write(msg["content"])
+        if "sources" in msg:
             with st.expander("📚 Ver trechos do documento usados como fonte"):
-                for i, node in enumerate(response.source_nodes):
-                    st.markdown(f"**Trecho {i+1}:**")
-                    import html
-                    safe_text = html.escape(node.node.text.strip())
-                    safe_text = safe_text.replace('\n\n', '__PARAGRAPH__')
-                    safe_text = safe_text.replace('\n', ' ')
-                    safe_text = safe_text.replace('__PARAGRAPH__', '<br><br>')
-                    
-                    block = f"<div style='background-color: var(--secondary-background-color); padding: 15px; border-radius: 8px; font-size: 14px; margin-bottom: 15px; line-height: 1.5;'>{safe_text}</div>"
-                    st.markdown(block, unsafe_allow_html=True)
-                    sources_html += f"**Trecho {i+1}:**\n{block}\n"
-            
-            # Salva a resposta no histórico
-            current_session["messages"].append({
-                "role": "assistant", 
-                "content": response.response,
-                "sources": sources_html
-            })
-            save_sessions(st.session_state.sessions)
-            
-            # Força o recarregamento para atualizar o histórico lateral e o título
-            st.rerun()
+                st.markdown(msg["sources"], unsafe_allow_html=True)
+
+question = st.chat_input("Digite sua pergunta aqui e aperte Enter...")
+
+if question:
+    if not query_engine:
+        st.error("Por favor, faça o upload de um PDF primeiro!")
+        st.stop()
+        
+    # Atualiza título na primeira pergunta
+    if len(current_session["messages"]) == 0:
+        current_session["title"] = question[:30] + ("..." if len(question) > 30 else "")
+        
+    # Adiciona pergunta do usuário ao histórico
+    current_session["messages"].append({"role": "user", "content": question})
+    save_sessions(st.session_state.sessions)
+    with st.chat_message("user"):
+        st.write(question)
+
+    # Exibe a resposta do assistente
+    with st.chat_message("assistant"):
+        with st.spinner("Analisando os PDFs e gerando a resposta..."):
+            response = query_engine.query(question)
+
+        st.write(response.response)
+
+        sources_html = ""
+        with st.expander("📚 Ver trechos do documento usados como fonte"):
+            for i, node in enumerate(response.source_nodes):
+                st.markdown(f"**Trecho {i+1}:**")
+                import html
+                safe_text = html.escape(node.node.text.strip())
+                safe_text = safe_text.replace('\n\n', '__PARAGRAPH__')
+                safe_text = safe_text.replace('\n', ' ')
+                safe_text = safe_text.replace('__PARAGRAPH__', '<br><br>')
+                
+                block = f"<div style='background-color: var(--secondary-background-color); padding: 15px; border-radius: 8px; font-size: 14px; margin-bottom: 15px; line-height: 1.5;'>{safe_text}</div>"
+                st.markdown(block, unsafe_allow_html=True)
+                sources_html += f"**Trecho {i+1}:**\n{block}\n"
+        
+        # Salva a resposta no histórico
+        current_session["messages"].append({
+            "role": "assistant", 
+            "content": response.response,
+            "sources": sources_html
+        })
+        save_sessions(st.session_state.sessions)
+        
+        # Força o recarregamento para atualizar o histórico lateral e o título
+        st.rerun()
