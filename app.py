@@ -7,17 +7,19 @@ Settings.embed_model = HuggingFaceEmbedding(
 
 import streamlit as st
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+import os
 
 st.title("RAG Demo")
 
 uploaded_files = st.file_uploader("Upload PDFs", accept_multiple_files=True)
 
 if uploaded_files:
+    os.makedirs("./data", exist_ok=True)
     for file in uploaded_files:
-        with open(f"./{file.name}", "wb") as f:
+        with open(f"./data/{file.name}", "wb") as f:
             f.write(file.getbuffer())
 
-    documents = SimpleDirectoryReader("./").load_data()
+    documents = SimpleDirectoryReader("./data").load_data()
     index = VectorStoreIndex.from_documents(documents)
 
     query_engine = index.as_query_engine()
