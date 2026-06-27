@@ -7,29 +7,21 @@ Settings.embed_model = HuggingFaceEmbedding(
 
 import streamlit as st
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
-from llama_index.llms.gemini import Gemini
+from llama_index.llms.groq import Groq
 import os
 
 st.title("RAG Demo")
 
-# Tenta pegar a chave dos Secrets do Streamlit Cloud primeiro
-gemini_api_key = st.secrets.get("GEMINI_API_KEY", "")
-
-# Se não estiver configurado nos Secrets, pede na interface
-if not gemini_api_key:
-    gemini_api_key = st.sidebar.text_input("Gemini API Key", type="password")
+groq_api_key = st.sidebar.text_input("Groq API Key (Gratuita)", type="password")
 
 uploaded_files = st.file_uploader("Upload PDFs", accept_multiple_files=True)
 
 if uploaded_files:
-    if not gemini_api_key:
-        st.info("Por favor, cole sua chave do Gemini na barra lateral para continuar.")
+    if not groq_api_key:
+        st.info("Para usar sem pagar nada, crie uma chave gratuita em https://console.groq.com/keys e cole na barra lateral.")
         st.stop()
         
-    Settings.llm = Gemini(
-        model="models/gemini-1.5-flash", 
-        api_key=gemini_api_key
-    )
+    Settings.llm = Groq(model="llama3-8b-8192", api_key=groq_api_key)
 
     os.makedirs("./data", exist_ok=True)
     for file in uploaded_files:
