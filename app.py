@@ -27,7 +27,7 @@ if uploaded_files:
         st.stop()
         
     Settings.llm = OpenAILike(
-        model="minimax/minimax-m2.5:free", 
+        model="meta-llama/llama-3.3-70b-instruct:free", 
         api_key=openrouter_api_key, 
         api_base="https://openrouter.ai/api/v1",
         is_chat_model=True,
