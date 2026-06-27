@@ -1,3 +1,8 @@
+from llama_index.embeddings.openai import OpenAIEmbedding
+from llama_index.core import Settings
+
+Settings.embed_model = OpenAIEmbedding()
+
 import streamlit as st
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
 
