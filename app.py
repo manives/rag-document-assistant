@@ -11,9 +11,17 @@ import os
 
 st.title("RAG Demo")
 
+openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
+
 uploaded_files = st.file_uploader("Upload PDFs", accept_multiple_files=True)
 
 if uploaded_files:
+    if not openai_api_key:
+        st.info("Please add your OpenAI API key in the sidebar to continue.")
+        st.stop()
+        
+    os.environ["OPENAI_API_KEY"] = openai_api_key
+
     os.makedirs("./data", exist_ok=True)
     for file in uploaded_files:
         with open(f"./data/{file.name}", "wb") as f:
