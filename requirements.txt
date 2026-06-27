@@ -6,5 +6,6 @@ llama-index-embeddings-openai
 chromadb
 pypdf
 llama-index
-llama-index-embeddings-openai
 openai
+llama-index-embeddings-huggingface
+sentence-transformers
