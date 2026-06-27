@@ -9,12 +9,51 @@ import streamlit as st
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
 from llama_index.llms.groq import Groq
 import os
+import json
+import uuid
 
 st.title("RAG Demo")
 
+DATA_DIR = "./data"
+SESSIONS_FILE = os.path.join(DATA_DIR, "sessions.json")
+os.makedirs(DATA_DIR, exist_ok=True)
+
+def load_sessions():
+    if os.path.exists(SESSIONS_FILE):
+        with open(SESSIONS_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+def save_sessions(sessions):
+    with open(SESSIONS_FILE, "w") as f:
+        json.dump(sessions, f)
+
 # Inicializa as variáveis de estado
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+if "sessions" not in st.session_state:
+    st.session_state.sessions = load_sessions()
+
+def create_session():
+    new_id = str(uuid.uuid4())
+    st.session_state.sessions[new_id] = {
+        "id": new_id,
+        "title": f"Nova Conversa {len(st.session_state.sessions) + 1}",
+        "messages": [],
+        "files": []
+    }
+    st.session_state.current_session_id = new_id
+    os.makedirs(os.path.join(DATA_DIR, new_id), exist_ok=True)
+    save_sessions(st.session_state.sessions)
+    return new_id
+
+if "current_session_id" not in st.session_state:
+    if st.session_state.sessions:
+        st.session_state.current_session_id = list(st.session_state.sessions.keys())[-1]
+    else:
+        create_session()
+
+current_id = st.session_state.current_session_id
+current_session = st.session_state.sessions[current_id]
+session_dir = os.path.join(DATA_DIR, current_id)
 if "temperature" not in st.session_state:
     st.session_state.temperature = 0.0 # Começa no 0 para evitar alucinações por padrão
 
@@ -38,18 +77,28 @@ if uploaded_files:
         temperature=st.session_state.temperature
     )
 
-    os.makedirs("./data", exist_ok=True)
+    os.makedirs(session_dir, exist_ok=True)
     for file in uploaded_files:
-        with open(f"./data/{file.name}", "wb") as f:
+        if file.name not in current_session["files"]:
+            current_session["files"].append(file.name)
+            save_sessions(st.session_state.sessions)
+            
+        with open(os.path.join(session_dir, file.name), "wb") as f:
             f.write(file.getbuffer())
 
+if current_session["files"]:
     @st.cache_resource(show_spinner="Indexando documentos...")
-    def get_query_engine(file_names):
-        documents = SimpleDirectoryReader("./data").load_data()
+    def get_query_engine(session_id, _file_names):
+        folder = os.path.join("./data", session_id)
+        if not os.path.exists(folder) or not os.listdir(folder):
+            return None
+        documents = SimpleDirectoryReader(folder).load_data()
         index = VectorStoreIndex.from_documents(documents)
         return index.as_query_engine()
         
-    query_engine = get_query_engine(tuple([f.name for f in uploaded_files]))
+    query_engine = get_query_engine(current_id, tuple(current_session["files"]))
+else:
+    query_engine = None
         
     # === CONTROLE DE CRIATIVIDADE (POPOVER) ===
     # Calcula a cor do botão baseado na temperatura (0.0 = Pastel, 1.0 = Verde Musgo)
@@ -82,16 +131,22 @@ if uploaded_files:
         )
         st.caption("Dica: Para RAG corporativo, mantenha próximo de 0.0.")
 
-    # Barra lateral com o histórico das perguntas (para fácil acesso)
-    if st.session_state.messages:
-        st.sidebar.markdown("---")
-        st.sidebar.markdown("### 🕒 Histórico de Perguntas")
-        for msg in st.session_state.messages:
-            if msg["role"] == "user":
-                st.sidebar.caption(f"💬 {msg['content']}")
+    # Lista de sessões
+    st.sidebar.markdown("---")
+    if st.sidebar.button("➕ Nova Conversa", use_container_width=True):
+        create_session()
+        st.rerun()
+
+    st.sidebar.markdown("### 🕒 Suas Conversas")
+    for s_id, session_data in reversed(list(st.session_state.sessions.items())):
+        is_current = (s_id == current_id)
+        btn_label = f"🟢 {session_data['title']}" if is_current else f"💬 {session_data['title']}"
+        if st.sidebar.button(btn_label, key=f"btn_{s_id}", use_container_width=True):
+            st.session_state.current_session_id = s_id
+            st.rerun()
 
     # Renderiza todas as mensagens anteriores na tela (estilo ChatGPT)
-    for msg in st.session_state.messages:
+    for msg in current_session["messages"]:
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
             if "sources" in msg:
@@ -101,8 +156,17 @@ if uploaded_files:
     question = st.chat_input("Digite sua pergunta aqui e aperte Enter...")
 
     if question:
+        if not query_engine:
+            st.error("Por favor, faça o upload de um PDF primeiro!")
+            st.stop()
+            
+        # Atualiza título na primeira pergunta
+        if len(current_session["messages"]) == 0:
+            current_session["title"] = question[:30] + ("..." if len(question) > 30 else "")
+            
         # Adiciona pergunta do usuário ao histórico
-        st.session_state.messages.append({"role": "user", "content": question})
+        current_session["messages"].append({"role": "user", "content": question})
+        save_sessions(st.session_state.sessions)
         with st.chat_message("user"):
             st.write(question)
 
@@ -128,11 +192,12 @@ if uploaded_files:
                     sources_html += f"**Trecho {i+1}:**\n{block}\n"
             
             # Salva a resposta no histórico
-            st.session_state.messages.append({
+            current_session["messages"].append({
                 "role": "assistant", 
                 "content": response.response,
                 "sources": sources_html
             })
+            save_sessions(st.session_state.sessions)
             
-            # Força o recarregamento para atualizar o histórico lateral
+            # Força o recarregamento para atualizar o histórico lateral e o título
             st.rerun()
