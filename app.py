@@ -12,6 +12,12 @@ import os
 
 st.title("RAG Demo")
 
+# Inicializa as variáveis de estado
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "temperature" not in st.session_state:
+    st.session_state.temperature = 0.0 # Começa no 0 para evitar alucinações por padrão
+
 # Tenta ler a chave dos secrets (definitiva) primeiro
 groq_api_key = st.secrets.get("GROQ_API_KEY", "")
 
@@ -26,7 +32,11 @@ if uploaded_files:
         st.info("Para usar sem pagar nada, crie uma chave gratuita em https://console.groq.com/keys e cole na barra lateral (ou configure os Secrets no painel).")
         st.stop()
         
-    Settings.llm = Groq(model="llama-3.1-8b-instant", api_key=groq_api_key)
+    Settings.llm = Groq(
+        model="llama-3.1-8b-instant", 
+        api_key=groq_api_key,
+        temperature=st.session_state.temperature
+    )
 
     os.makedirs("./data", exist_ok=True)
     for file in uploaded_files:
@@ -40,11 +50,38 @@ if uploaded_files:
         return index.as_query_engine()
         
     query_engine = get_query_engine(tuple([f.name for f in uploaded_files]))
-
-    # Inicializa o histórico de mensagens e perguntas
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
         
+    # === CONTROLE DE CRIATIVIDADE (POPOVER) ===
+    # Calcula a cor do botão baseado na temperatura (0.0 = Pastel, 1.0 = Verde Musgo)
+    temp = st.session_state.temperature
+    r = int(245 - (245 - 85) * temp)
+    g = int(245 - (245 - 107) * temp)
+    b = int(220 - (220 - 47) * temp)
+    text_color = "white" if temp > 0.4 else "black"
+
+    st.markdown(f"""
+    <style>
+    /* Estiliza especificamente o botão do popover na barra lateral */
+    [data-testid="stSidebar"] div[data-testid="stPopover"] button {{
+        background-color: rgb({r}, {g}, {b}) !important;
+        color: {text_color} !important;
+        border: 1px solid rgba(0,0,0,0.1) !important;
+        transition: all 0.3s ease;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+    with st.sidebar.popover("🧠 Nível de Criatividade"):
+        st.markdown("**Ajuste o volume de criatividade da IA**")
+        st.slider(
+            "0 = Respostas robóticas e precisas\n1 = Respostas criativas e variáveis", 
+            min_value=0.0, 
+            max_value=1.0, 
+            step=0.1, 
+            key="temperature"
+        )
+        st.caption("Dica: Para RAG corporativo, mantenha próximo de 0.0.")
+
     # Barra lateral com o histórico das perguntas (para fácil acesso)
     if st.session_state.messages:
         st.sidebar.markdown("---")
