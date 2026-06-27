@@ -120,7 +120,7 @@ with st.sidebar.popover("🧠 Nível de Criatividade"):
     
     col1, col2, col3 = st.columns([1, 8, 1])
     with col1:
-        st.markdown("<div style='margin-top: 2px; text-align: center;'><i class='fa-solid fa-brain' style='color: #D3D3D3; font-size: 20px;'></i></div>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-top: 7px; text-align: center;'><i class='fa-solid fa-brain' style='color: #D3D3D3; font-size: 20px;'></i></div>", unsafe_allow_html=True)
     with col2:
         st.slider(
             "Volume", 
@@ -131,7 +131,7 @@ with st.sidebar.popover("🧠 Nível de Criatividade"):
             label_visibility="collapsed"
         )
     with col3:
-        st.markdown(f"<div style='margin-top: 2px; text-align: center;'><i class='fa-solid fa-brain' style='color: rgb({r}, {g}, {b}); font-size: 20px;'></i></div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='margin-top: 7px; text-align: center;'><i class='fa-solid fa-brain' style='color: rgb({r}, {g}, {b}); font-size: 20px;'></i></div>", unsafe_allow_html=True)
         
     st.caption("Dica: Para respostas mais corporativas, mantenha próximo de 0.0.")
 
