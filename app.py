@@ -6,21 +6,22 @@ Settings.embed_model = HuggingFaceEmbedding(
 )
 
 import streamlit as st
-from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
+from llama_index.llms.groq import Groq
 import os
 
 st.title("RAG Demo")
 
-openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
+groq_api_key = st.sidebar.text_input("Groq API Key (Gratuita)", type="password")
 
 uploaded_files = st.file_uploader("Upload PDFs", accept_multiple_files=True)
 
 if uploaded_files:
-    if not openai_api_key:
-        st.info("Please add your OpenAI API key in the sidebar to continue.")
+    if not groq_api_key:
+        st.info("Para usar sem pagar nada, crie uma chave gratuita em https://console.groq.com/keys e cole na barra lateral.")
         st.stop()
         
-    os.environ["OPENAI_API_KEY"] = openai_api_key
+    Settings.llm = Groq(model="llama3-8b-8192", api_key=groq_api_key)
 
     os.makedirs("./data", exist_ok=True)
     for file in uploaded_files:
