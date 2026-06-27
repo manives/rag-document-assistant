@@ -116,11 +116,11 @@ st.markdown('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs
 
 with st.sidebar.popover("🧠 Nível de Criatividade"):
     st.markdown("**Ajuste o volume de criatividade da IA**")
-    st.markdown("<p style='font-size: 13px; margin-bottom: -10px;'>0 = Robóticas e precisas &nbsp;|&nbsp; 1 = Criativas e variáveis</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 13px; margin-bottom: 10px;'>0 = Robóticas e precisas &nbsp;|&nbsp; 1 = Criativas e variáveis</p>", unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 8, 1])
     with col1:
-        st.markdown("<div style='margin-top: 5px; text-align: center;'><i class='fa-solid fa-brain' style='color: #D3D3D3; font-size: 20px;'></i></div>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-top: 15px; text-align: center;'><i class='fa-solid fa-brain' style='color: #D3D3D3; font-size: 20px;'></i></div>", unsafe_allow_html=True)
     with col2:
         st.slider(
             "Volume", 
@@ -131,7 +131,7 @@ with st.sidebar.popover("🧠 Nível de Criatividade"):
             label_visibility="collapsed"
         )
     with col3:
-        st.markdown(f"<div style='margin-top: 5px; text-align: center;'><i class='fa-solid fa-brain' style='color: rgb({r}, {g}, {b}); font-size: 20px;'></i></div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='margin-top: 15px; text-align: center;'><i class='fa-solid fa-brain' style='color: rgb({r}, {g}, {b}); font-size: 20px;'></i></div>", unsafe_allow_html=True)
         
     st.caption("Dica: Para respostas mais corporativas, mantenha próximo de 0.0.")
 
